@@ -1,4 +1,5 @@
 from app import db
+from hashlib import md5
 
 
 class User(db.Model):
@@ -6,6 +7,8 @@ class User(db.Model):
     nickname = db.Column(db.String(64), index=True, unique=True)
     email = db.Column(db.String(120), index=True, unique=True)
     posts = db.relationship('Post', backref='author', lazy='dynamic')
+    about_me = db.Column(db.String(140))
+    last_seen = db.Column(db.DateTime)
 
     @property
     def is_authenticated(self):
@@ -28,6 +31,30 @@ class User(db.Model):
     def __repr__(self):
         return '<User %r>' % (self.nickname)
 
+    def avatar(self, size):
+        return 'http://www.gravatar.com/avatar/%s?d=mm&s=%d' % (md5(self.email.encode('utf-8')).hexdigest(), size)
+
+    @staticmethod
+    def make_unique_nickname(nickname):
+        if User.query.filter_by(nickname=nickname).first() is None:
+            return nickname
+        version = 2
+        while True:
+            new_nickname = nickname + str(version)
+            if User.query.filter_by(nickname=new_nickname).first() is None:
+                break
+            version += 1
+        return new_nickname
+
+    @staticmethod
+    def add_dummy_users():
+
+        dummyusers = ["dummyuser", "dummyuser2"]
+        for user in dummyusers:
+            if User.query.filter_by(nickname=user).first() is None:
+                dummy = User(nickname = user, email = user + "@mail.com")
+                db.session.add(dummy)
+                db.session.commit()
 
 class Post(db.Model):
     id = db.Column(db.Integer, primary_key=True)
