@@ -26,3 +26,6 @@ MAIL_PASSWORD = None
 
 # administrator list
 ADMINS = ['euler1337@yahoo.com']
+
+# Text Search
+MAX_SEARCH_RESULTS = 50
