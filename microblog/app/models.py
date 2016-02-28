@@ -46,10 +46,6 @@ class User(db.Model):
         except NameError:
             return str(self.id)  # python 3
 
-    # HOMEMADE
-    def __init__(self):
-        self.follow(self)
-
     def __repr__(self):
         return '<User %r>' % (self.nickname)
 
