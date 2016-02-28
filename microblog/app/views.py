@@ -4,6 +4,7 @@ from flask.ext.login import login_user, logout_user, current_user, \
 from app import app, db, lm, oid
 from forms import LoginForm, EditForm, PostForm, SearchForm
 from .models import User, Post
+from .emails import follower_notification
 from datetime import datetime
 from config import POSTS_PER_PAGE, MAX_SEARCH_RESULTS
 
@@ -106,7 +107,7 @@ def user(nickname, page=1):
     if user == None:
         flash('User %s not found.' % nickname)
         return redirect(url_for('index'))
-    posts = user.posts.paginate(page, POSTS_PER_PAGE, False)
+    posts = user.posts.order_by(Post.timestamp.desc()).paginate(page, POSTS_PER_PAGE, False)
     return render_template('user.html',
                            user=user,
                            posts=posts)
@@ -140,10 +141,11 @@ def follow(nickname):
     u = g.user.follow(user)
     if u is None:
         flash('Cannot follow ' + nickname + '.')
-        return recirect(url_for('user', nickname=nickname))
+        return redirect(url_for('user', nickname=nickname))
     db.session.add(u)
     db.session.commit()
     flash('You are now following ' + nickname + ' !')
+    follower_notification(user, g.user)
     return redirect(url_for('user', nickname=nickname))
 
 @app.route('/unfollow/<nickname>')
